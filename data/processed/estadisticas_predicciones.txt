@@ -1,0 +1,59 @@
+============================================================
+ESTADÍSTICAS DE PREDICCIONES SENSORIALES
+============================================================
+
+Total formulaciones: 232
+Originales con datos reales: 8
+Nuevas predicciones: 224
+
+Estadísticas de predicciones:
+
+BRILLO:
+  Media: 2.261
+  Std: 0.321
+  Rango: 1.793 - 3.062
+
+CLARIDAD:
+  Media: 2.297
+  Std: 0.308
+  Rango: 1.706 - 3.076
+
+DULZURA:
+  Media: 1.960
+  Std: 0.219
+  Rango: 1.565 - 2.883
+
+ACIDEZ:
+  Media: 2.649
+  Std: 0.296
+  Rango: 2.131 - 3.398
+
+ADHESIVIDAD:
+  Media: 4.731
+  Std: 0.444
+  Rango: 3.873 - 6.044
+
+ELASTICIDAD:
+  Media: 3.518
+  Std: 0.782
+  Rango: 2.208 - 5.393
+
+ARENOSIDAD:
+  Media: 5.327
+  Std: 0.180
+  Rango: 4.923 - 5.748
+
+DUREZA:
+  Media: 1.948
+  Std: 0.304
+  Rango: 1.409 - 2.726
+
+GOMOSIDAD:
+  Media: 2.349
+  Std: 0.451
+  Rango: 1.568 - 3.417
+
+MASTICABILIDAD:
+  Media: 2.305
+  Std: 0.370
+  Rango: 1.678 - 3.227

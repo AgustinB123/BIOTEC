@@ -1,0 +1,41 @@
+============================================================
+INFORME MODELO DE PREDICCIÓN DE DULZURA
+============================================================
+
+Fecha: 2026-08-24
+Total de muestras: 8
+
+MÉTRICAS DE EVALUACIÓN:
+----------------------------------------
+
+ENTRENAMIENTO:
+  R²:  0.981
+  RMSE: 0.031
+  MAE:  0.021
+
+PRUEBA:
+  R²:  0.923
+  RMSE: 0.064
+  MAE:  0.047
+
+VALIDACIÓN CRUZADA (3 folds):
+  R² promedio: 0.856 ± 0.015
+
+TOP 10 VARIABLES MÁS IMPORTANTES:
+----------------------------------------
+  gelatina_g: 0.406
+  fibra_g: 0.155
+  azucar_g: 0.149
+  fibra_Batata_Cáscara_5%: 0.035
+  OHC: 0.029
+  esencia_g: 0.027
+  Polifenoles_totales: 0.024
+  WHC: 0.024
+  DPPH: 0.024
+  SC: 0.022
+
+============================================================
+Total de variables: 31
+Archivo del modelo: /Users/agustinezequielbrites/Desktop/BIOTEC MOQUEADOS/models/modelo_dulzura_rf.pkl
+Gráficos generados en: /Users/agustinezequielbrites/Desktop/BIOTEC MOQUEADOS/data/plots
+============================================================
