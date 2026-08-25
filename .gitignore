@@ -4,3 +4,7 @@ __pycache__/
 .DS_Store
 data/processed/*.csv
 data/processed/*.xlsx
+data/processed/backups/
+data/processed/informes/
+models/backups/
+datosPruba/
