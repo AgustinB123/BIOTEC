@@ -1,42 +1,15 @@
-"""
-MÓDULO 1: CARGA Y VALIDACIÓN DE DATOS
-Autor: Proyecto Gomitas IA
-Fecha: 2026-08-24
-Descripción: Carga, valida y guarda los 4 archivos con versionado automático
-"""
+"""Módulo 1: Carga, validación estructural y almacenamiento versionado de datasets."""
 
-import os
+from datetime import datetime
+from pathlib import Path
+import shutil
 import pandas as pd
 import streamlit as st
-from pathlib import Path
-from datetime import datetime
-import json
-import shutil
 
-# ==================== CONFIGURACIÓN ====================
-
-def get_default_paths():
-    """Obtiene las rutas por defecto de los archivos"""
-    base_dir = Path(__file__).parent.parent
-    data_dir = base_dir / 'data' / 'processed'
-    
-    # Crear carpeta si no existe
-    data_dir.mkdir(parents=True, exist_ok=True)
-    
-    return {
-        'formulaciones': data_dir / 'formulaciones.xlsx',
-        'sensorial': data_dir / 'perfil_sensorial.xlsx',
-        'propiedades': data_dir / 'propiedades_fibra.xlsx',
-        'aceptabilidad': data_dir / 'aceptabilidad.xlsx',
-        'backup_dir': data_dir / 'backups'  # Carpeta para respaldos
-    }
-
-def get_backup_filename(filename):
-    """Genera un nombre de archivo con fecha y hora para respaldo"""
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    name = filename.stem
-    ext = filename.suffix
-    return f"{name}_backup_{timestamp}{ext}"
+try:
+    from dashboard.utils import crear_backup_si_existe, get_project_paths as get_default_paths
+except ImportError:
+    from utils import crear_backup_si_existe, get_project_paths as get_default_paths
 
 # ==================== ESTRUCTURAS REQUERIDAS ====================
 
@@ -127,26 +100,6 @@ def get_estructuras_requeridas():
 
 # ==================== FUNCIONES DE VERSIONADO ====================
 
-def crear_backup_si_existe(filepath):
-    """
-    Si el archivo existe, crea un backup con fecha y hora
-    """
-    if filepath.exists():
-        # Crear carpeta de backups
-        backup_dir = filepath.parent / 'backups'
-        backup_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Generar nombre de backup
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        backup_name = f"{filepath.stem}_backup_{timestamp}{filepath.suffix}"
-        backup_path = backup_dir / backup_name
-        
-        # Mover archivo a backup
-        shutil.move(str(filepath), str(backup_path))
-        
-        return backup_path
-    return None
-
 def guardar_archivo_con_versionado(df, filepath, nombre_archivo):
     """
     Guarda un archivo con versionado automático
@@ -197,14 +150,55 @@ def guardar_todos_los_archivos(dataframes, paths):
     
     return resultados
 
-# ==================== FUNCIONES DE VALIDACIÓN ====================
+# ==================== NORMALIZACIÓN Y VALIDACIÓN ====================
+
+COLUMN_ALIASES = {
+    "id_gomita": "codigo_gomita",
+    "id_formulacion": "codigo_gomita",
+    "tipo_fibra": "fibra_tipo",
+    "azucar": "azucar_g",
+    "jarabe_glucosa": "jarabe_glucosa_g",
+    "agua": "agua_g",
+    "gelatina": "gelatina_g",
+    "goma_xantica": "goma_xantica_g",
+    "acido_citrico": "acido_citrico_g",
+    "stevia": "stevia_g",
+    "esencia": "esencia_g",
+    "sorbitol": "sorbitol_g",
+    "fibra": "fibra_g",
+    "viable": "buena",
+    "polifenoles": "Polifenoles_totales",
+    "polifenoles_totales": "Polifenoles_totales",
+    "habito_fumar": "fuma",
+    "masticar": "sensacion",
+    "promedio_aceptacion": "aceptacion_promedio",
+    "categoria": "aceptacion_global",
+}
+
+
+def normalizar_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    """Normaliza nombres de columnas (soporta tanto formato dashboard como formato paper)."""
+    out = df.copy()
+    out.columns = [str(col).strip() for col in out.columns]
+    rename_map = {
+        col: COLUMN_ALIASES[col]
+        for col in out.columns
+        if col in COLUMN_ALIASES and COLUMN_ALIASES[col] not in out.columns
+    }
+    if rename_map:
+        out = out.rename(columns=rename_map)
+    return out
+
 
 def validar_columnas(df, columnas_requeridas, nombre_archivo):
     """Valida que el dataframe tenga las columnas requeridas"""
     columnas_faltantes = [col for col in columnas_requeridas if col not in df.columns]
     
     if columnas_faltantes:
-        return False, f"❌ Faltan columnas en {nombre_archivo}: {', '.join(columnas_faltantes)}"
+        return False, (
+            f"❌ Faltan columnas en {nombre_archivo}: {', '.join(columnas_faltantes)} "
+            f"(columnas encontradas: {', '.join(map(str, df.columns[:8]))})"
+        )
     return True, f"✅ {nombre_archivo} válido: {len(df)} filas, {len(df.columns)} columnas"
 
 def validar_tipos_datos(df, nombre_archivo):
@@ -229,28 +223,37 @@ def validar_tipos_datos(df, nombre_archivo):
         for col in columnas_numericas[nombre_archivo]:
             if col in df.columns:
                 try:
+                    if df[col].dtype == object:
+                        df[col] = df[col].astype(str).str.replace(',', '.', regex=False)
                     df[col] = pd.to_numeric(df[col])
-                except:
+                except Exception:
                     errores.append(f"  - {col}: debe ser numérico")
     
     return errores
 
 def validar_codigos_coincidentes(df_formulaciones, df_sensorial):
-    """Valida que los códigos de gomita coincidan"""
-    codigos_formulaciones = set(df_formulaciones['codigo_gomita'].unique())
-    codigos_sensorial = set(df_sensorial['codigo_gomita'].unique())
+    """Valida que los códigos de gomita coincidan (considerando formulaciones viables si existe 'buena')."""
+    if 'buena' in df_formulaciones.columns:
+        viables = df_formulaciones[pd.to_numeric(df_formulaciones['buena'], errors='coerce') == 1]
+        codigos_esperados = set(viables['codigo_gomita'].astype(str).unique())
+        todos_codigos_form = set(df_formulaciones['codigo_gomita'].astype(str).unique())
+    else:
+        codigos_esperados = set(df_formulaciones['codigo_gomita'].astype(str).unique())
+        todos_codigos_form = codigos_esperados
+
+    codigos_sensorial = set(df_sensorial['codigo_gomita'].astype(str).unique())
     
-    solo_formulaciones = codigos_formulaciones - codigos_sensorial
-    solo_sensorial = codigos_sensorial - codigos_formulaciones
+    faltantes_en_sensorial = codigos_esperados - codigos_sensorial
+    solo_sensorial = codigos_sensorial - todos_codigos_form
     
     errores = []
     
-    if solo_formulaciones:
-        errores.append(f"  - Códigos solo en formulaciones: {', '.join(list(solo_formulaciones)[:5])}")
+    if faltantes_en_sensorial:
+        errores.append(f"  - Códigos viables sin perfil sensorial: {', '.join(list(faltantes_en_sensorial)[:5])}")
     if solo_sensorial:
         errores.append(f"  - Códigos solo en sensorial: {', '.join(list(solo_sensorial)[:5])}")
     
-    return errores, len(codigos_formulaciones & codigos_sensorial)
+    return errores, len(todos_codigos_form & codigos_sensorial)
 
 def validar_tipos_fibra(df_formulaciones, df_propiedades):
     """Valida que los tipos de fibra coincidan"""
@@ -272,11 +275,18 @@ def cargar_archivo(archivo, nombre, estructuras):
     try:
         nombre_archivo = archivo.name.lower()
         if nombre_archivo.endswith('.csv'):
-            df = pd.read_csv(archivo, decimal=',')
+            archivo.seek(0)
+            df = pd.read_csv(archivo, sep=None, engine='python')
         else:
             df = pd.read_excel(archivo)
-        
-        columnas_requeridas = estructuras[nombre]['columnas']
+
+        df = normalizar_dataframe(df)
+
+        columnas_requeridas = list(estructuras[nombre]['columnas'])
+        # Si sensorial viene sin fibra_tipo (formato paper), se completará al cruzar con formulaciones
+        if nombre == 'sensorial' and 'fibra_tipo' not in df.columns:
+            columnas_requeridas = [c for c in columnas_requeridas if c != 'fibra_tipo']
+
         valido, mensaje = validar_columnas(df, columnas_requeridas, estructuras[nombre]['descripcion'])
         
         if not valido:
@@ -324,6 +334,14 @@ def cargar_y_validar_datos(archivos):
     
     # 2. Validaciones cruzadas
     if 'formulaciones' in dataframes and 'sensorial' in dataframes:
+        if 'fibra_tipo' not in dataframes['sensorial'].columns and 'fibra_tipo' in dataframes['formulaciones'].columns:
+            mapa_fibra = (
+                dataframes['formulaciones']
+                .drop_duplicates(subset=['codigo_gomita'])
+                .set_index('codigo_gomita')['fibra_tipo']
+            )
+            dataframes['sensorial']['fibra_tipo'] = dataframes['sensorial']['codigo_gomita'].map(mapa_fibra)
+
         errores_codigos, coincidencias = validar_codigos_coincidentes(
             dataframes['formulaciones'], dataframes['sensorial']
         )

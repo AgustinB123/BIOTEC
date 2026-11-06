@@ -1,41 +1,32 @@
-"""
-PIPELINE DE DATOS - APLICACIÓN PRINCIPAL
-Autor: Proyecto Gomitas IA
-Fecha: 2026-08-24
-Descripción: Aplicación principal que orquesta los 6 módulos del pipeline
+"""Aplicación principal en Streamlit que integra los módulos de análisis y modelado.
+
+Ejecución:
+    streamlit run dashboard/pipeline_app.py
 """
 
 import streamlit as st
 
-# Configuración de la página
 st.set_page_config(
     page_title="🍬 Pipeline de Datos - Gomitas IA",
     page_icon="🍬",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
 )
 
-# ==================== IMPORTAR MÓDULOS ====================
-
-# Intentar importar desde dashboard/
 try:
-    from cargar_datos import app_cargar_datos
-    from entrenar_modelos import app_entrenar_modelos
-    from recomendador_recetas import app_recomendador
-    from perfil_sensorial import app_perfil_sensorial
-    from prediccion_aceptabilidad import app_prediccion_aceptabilidad
-    from comparacion_formulaciones import app_comparacion
+    from dashboard.cargar_datos import app_cargar_datos
+    from dashboard.comparacion_formulaciones import app_comparacion
+    from dashboard.entrenar_modelos import app_entrenar_modelos
+    from dashboard.perfil_sensorial import app_perfil_sensorial
+    from dashboard.prediccion_aceptabilidad import app_prediccion_aceptabilidad
+    from dashboard.recomendador_recetas import app_recomendador
 except ImportError:
-    # Si no está en el mismo directorio, buscar en src
-    import sys
-    import os
-    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
     from cargar_datos import app_cargar_datos
+    from comparacion_formulaciones import app_comparacion
     from entrenar_modelos import app_entrenar_modelos
-    from recomendador_recetas import app_recomendador
     from perfil_sensorial import app_perfil_sensorial
     from prediccion_aceptabilidad import app_prediccion_aceptabilidad
-    from comparacion_formulaciones import app_comparacion
+    from recomendador_recetas import app_recomendador
 
 # ==================== NAVEGACIÓN ====================
 

@@ -1,73 +1,33 @@
-"""
-MÓDULO 2: ENTRENAMIENTO DE MODELOS
-Autor: Proyecto Gomitas IA
-Fecha: 2026-08-24
-Descripción: Configuración, entrenamiento y evaluación de modelos con versionado
-"""
+"""Módulo 2: Procesamiento de variables, entrenamiento y evaluación de modelos."""
 
-import os
-import pickle
-import pandas as pd
-import numpy as np
-import streamlit as st
-from pathlib import Path
 from datetime import datetime
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
-from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error, accuracy_score, classification_report
-from sklearn.preprocessing import StandardScaler
-import json
+from pathlib import Path
+import pickle
 import shutil
 import warnings
-warnings.filterwarnings('ignore')
 
-# ==================== CONFIGURACIÓN ====================
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.metrics import (
+    accuracy_score,
+    classification_report,
+    mean_absolute_error,
+    mean_squared_error,
+    r2_score,
+)
+from sklearn.model_selection import cross_val_score, train_test_split
+from sklearn.preprocessing import StandardScaler
+import streamlit as st
 
-def get_paths():
-    """Obtiene las rutas de los archivos"""
-    base_dir = Path(__file__).parent.parent
-    data_dir = base_dir / 'data' / 'processed'
-    models_dir = base_dir / 'models'
-    reports_dir = data_dir / 'informes'
-    
-    # Crear carpetas si no existen
-    data_dir.mkdir(parents=True, exist_ok=True)
-    models_dir.mkdir(parents=True, exist_ok=True)
-    reports_dir.mkdir(parents=True, exist_ok=True)
-    
-    return {
-        'data_dir': data_dir,
-        'models_dir': models_dir,
-        'reports_dir': reports_dir,
-        'dataset_procesado': data_dir / 'dataset_procesado.xlsx',
-        'modelos_sensoriales': models_dir / 'modelos_sensoriales.pkl',
-        'modelo_aceptabilidad': models_dir / 'modelo_aceptabilidad.pkl',
-        'escaladores': models_dir / 'escaladores.pkl',
-        'features': models_dir / 'features.pkl'
-    }
+try:
+    from dashboard.utils import crear_backup_si_existe, get_project_paths as get_paths
+except ImportError:
+    from utils import crear_backup_si_existe, get_project_paths as get_paths
 
-def get_backup_filename(filepath):
-    """Genera un nombre de archivo con fecha y hora para respaldo"""
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    name = filepath.stem
-    ext = filepath.suffix
-    return f"{name}_backup_{timestamp}{ext}"
-
-def crear_backup_si_existe(filepath):
-    """Crea backup si el archivo existe"""
-    if filepath.exists():
-        backup_dir = filepath.parent / 'backups'
-        backup_dir.mkdir(parents=True, exist_ok=True)
-        
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        backup_name = f"{filepath.stem}_backup_{timestamp}{filepath.suffix}"
-        backup_path = backup_dir / backup_name
-        
-        shutil.move(str(filepath), str(backup_path))
-        return backup_path
-    return None
+warnings.filterwarnings("ignore")
 
 def guardar_con_versionado(df, filepath, nombre_archivo):
     """Guarda un archivo con versionado automático"""

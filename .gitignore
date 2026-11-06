@@ -1,4 +1,5 @@
 .venv/
+.agents/
 __pycache__/
 *.pyc
 .DS_Store
@@ -7,3 +8,4 @@ data/processed/*.xlsx
 data/processed/backups/
 data/processed/informes/
 models/backups/
+outputs/*.pkl

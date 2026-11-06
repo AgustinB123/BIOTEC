@@ -1,81 +1,31 @@
-"""
-🧬 RECOMENDADOR DE RECETAS - CONTROL TOTAL
-Autor: Proyecto Gomitas IA
-Fecha: 2026-08-25
-Descripción: Algoritmo Genético con control completo sobre maximizar/minimizar/restricciones
-ESCALA: 1-9
-"""
+"""Módulo 3: Optimización multiobjetivo de formulaciones mediante algoritmos genéticos."""
 
-import os
+from datetime import datetime
+from pathlib import Path
+import random
+import warnings
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import pickle
-import random
-import matplotlib.pyplot as plt
 import streamlit as st
-from pathlib import Path
-from datetime import datetime
-import warnings
-warnings.filterwarnings('ignore')
 
-# ==================== CONFIGURACIÓN ====================
+try:
+    from dashboard.utils import (
+        cargar_modelos_sensoriales as cargar_modelos,
+        get_ingredient_descriptions,
+        get_ingredient_limits,
+        get_project_paths as get_paths,
+    )
+except ImportError:
+    from utils import (
+        cargar_modelos_sensoriales as cargar_modelos,
+        get_ingredient_descriptions,
+        get_ingredient_limits,
+        get_project_paths as get_paths,
+    )
 
-def get_paths():
-    """Obtiene las rutas de los archivos"""
-    base_dir = Path(__file__).parent.parent
-    models_dir = base_dir / 'models'
-    return {
-        'modelos_sensoriales': models_dir / 'modelos_sensoriales.pkl',
-        'escaladores': models_dir / 'escaladores.pkl',
-        'features': models_dir / 'features.pkl'
-    }
-
-def cargar_modelos():
-    """Carga los modelos entrenados"""
-    paths = get_paths()
-    
-    try:
-        with open(paths['modelos_sensoriales'], 'rb') as f:
-            modelos = pickle.load(f)
-        with open(paths['escaladores'], 'rb') as f:
-            escaladores = pickle.load(f)
-        with open(paths['features'], 'rb') as f:
-            features = pickle.load(f)
-        return modelos, escaladores, features, None
-    except Exception as e:
-        return None, None, None, str(e)
-
-# ==================== DEFINIR LÍMITES ====================
-
-def get_ingredient_limits():
-    """Define los límites de los ingredientes"""
-    return {
-        'azucar_g': (0.2, 11.4),
-        'jarabe_glucosa_g': (0.3, 7.8),
-        'agua_g': (0.5, 8.922),
-        'gelatina_g': (0.0, 1.2),
-        'goma_xantica_g': (0.0, 1.2),
-        'acido_citrico_g': (0.05, 0.6),
-        'stevia_g': (0.0, 1.4),
-        'esencia_g': (0.05, 0.6),
-        'sorbitol_g': (0.0, 5.5),
-        'fibra_g': (0.0, 2.6)
-    }
-
-def get_ingredient_descriptions():
-    """Descripciones educativas de cada ingrediente"""
-    return {
-        'azucar_g': '🍬 Azúcar: Aporta dulzura y cuerpo. Es el principal edulcorante.',
-        'jarabe_glucosa_g': '🍯 Jarabe de Glucosa: Evita la cristalización, aporta humedad y textura suave.',
-        'agua_g': '💧 Agua: Base de la formulación. Disuelve los ingredientes y da humedad.',
-        'gelatina_g': '🧪 Gelatina: Da la textura gomosa y elasticidad. Es la clave de la gomosidad.',
-        'goma_xantica_g': '🌿 Goma Xántica: Estabilizador natural que mejora la textura y retiene agua.',
-        'acido_citrico_g': '🍋 Ácido Cítrico: Aporta acidez y realza los sabores. Da el toque ácido.',
-        'stevia_g': '🌱 Stevia: Edulcorante natural. Es 200-300 veces más dulce que el azúcar.',
-        'esencia_g': '🌸 Esencia: Aporta sabor y aroma. Define el perfil de sabor de la gomita.',
-        'sorbitol_g': '🍬 Sorbitol: Edulcorante que aporta humedad y previene el endurecimiento.',
-        'fibra_g': '🌾 Fibra: Aporta beneficios saludables y modifica la textura. Aumenta la adhesividad.'
-    }
+warnings.filterwarnings("ignore")
 
 # ==================== DESCRIPCIÓN DE ATRIBUTOS ====================
 

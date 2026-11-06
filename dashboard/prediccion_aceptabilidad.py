@@ -1,76 +1,31 @@
-"""
-👥 MÓDULO 5: PREDICCIÓN DE ACEPTABILIDAD
-Autor: Proyecto Gomitas IA
-Fecha: 2026-08-25
-Descripción: Predice la aceptación del consumidor basado en el perfil sensorial
-ESCALA: 1-9 (corregido)
-"""
+"""Módulo 5: Predicción de aceptabilidad del consumidor a partir del perfil sensorial."""
 
-import os
-import pickle
-import pandas as pd
-import numpy as np
-import streamlit as st
-from pathlib import Path
-import matplotlib.pyplot as plt
-import seaborn as sns
-import plotly.graph_objects as go
-import plotly.express as px
 from datetime import datetime
+from pathlib import Path
 import warnings
-warnings.filterwarnings('ignore')
 
-# ==================== CONFIGURACIÓN ====================
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import seaborn as sns
+import streamlit as st
 
-def get_paths():
-    """Obtiene las rutas de los archivos"""
-    base_dir = Path(__file__).parent.parent
-    models_dir = base_dir / 'models'
-    return {
-        'modelo_aceptabilidad': models_dir / 'modelo_aceptabilidad.pkl',
-        'modelos_sensoriales': models_dir / 'modelos_sensoriales.pkl',
-        'escaladores': models_dir / 'escaladores.pkl',
-        'features': models_dir / 'features.pkl'
-    }
+try:
+    from dashboard.utils import (
+        cargar_todos_los_modelos as cargar_modelos,
+        get_project_paths as get_paths,
+        predecir_perfil,
+    )
+except ImportError:
+    from utils import (
+        cargar_todos_los_modelos as cargar_modelos,
+        get_project_paths as get_paths,
+        predecir_perfil,
+    )
 
-def cargar_modelos():
-    """Carga los modelos entrenados"""
-    paths = get_paths()
-    
-    try:
-        with open(paths['modelo_aceptabilidad'], 'rb') as f:
-            modelo_aceptabilidad = pickle.load(f)
-        with open(paths['modelos_sensoriales'], 'rb') as f:
-            modelos_sensoriales = pickle.load(f)
-        with open(paths['escaladores'], 'rb') as f:
-            escaladores = pickle.load(f)
-        with open(paths['features'], 'rb') as f:
-            features = pickle.load(f)
-        return modelo_aceptabilidad, modelos_sensoriales, escaladores, features, None
-    except Exception as e:
-        return None, None, None, None, str(e)
-
-# ==================== PREDECIR PERFIL ====================
-
-def predecir_perfil(receta, modelos_sensoriales, escaladores, targets, features):
-    """Predice el perfil sensorial de una receta"""
-    receta_df = pd.DataFrame([receta])
-    
-    for col in features:
-        if col not in receta_df.columns:
-            receta_df[col] = 0
-    
-    receta_df = receta_df[features]
-    
-    predicciones = {}
-    for target in targets:
-        try:
-            X_scaled = escaladores[target].transform(receta_df)
-            predicciones[target] = modelos_sensoriales[target].predict(X_scaled)[0]
-        except:
-            predicciones[target] = 0
-    
-    return predicciones
+warnings.filterwarnings("ignore")
 
 # ==================== PREDECIR ACEPTABILIDAD ====================
 

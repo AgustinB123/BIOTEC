@@ -1,105 +1,35 @@
-"""
-MÓDULO 4: PERFIL SENSORIAL
-Autor: Proyecto Gomitas IA
-Fecha: 2026-08-25
-Descripción: Visualiza el perfil sensorial de cualquier receta
-ESCALA: 1-9 (corregido)
-"""
+"""Módulo 4: Simulación y visualización del perfil sensorial (escala 1-9)."""
 
-import os
-import pickle
-import pandas as pd
-import numpy as np
-import streamlit as st
-from pathlib import Path
-import matplotlib.pyplot as plt
-import seaborn as sns
-import plotly.graph_objects as go
-import plotly.express as px
 from datetime import datetime
+from pathlib import Path
 import warnings
-warnings.filterwarnings('ignore')
 
-# ==================== CONFIGURACIÓN ====================
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import seaborn as sns
+import streamlit as st
 
-def get_paths():
-    """Obtiene las rutas de los archivos"""
-    base_dir = Path(__file__).parent.parent
-    models_dir = base_dir / 'models'
-    return {
-        'modelos_sensoriales': models_dir / 'modelos_sensoriales.pkl',
-        'escaladores': models_dir / 'escaladores.pkl',
-        'features': models_dir / 'features.pkl'
-    }
+try:
+    from dashboard.utils import (
+        cargar_modelos_sensoriales as cargar_modelos,
+        get_ingredient_descriptions,
+        get_ingredient_limits,
+        get_project_paths as get_paths,
+        predecir_perfil,
+    )
+except ImportError:
+    from utils import (
+        cargar_modelos_sensoriales as cargar_modelos,
+        get_ingredient_descriptions,
+        get_ingredient_limits,
+        get_project_paths as get_paths,
+        predecir_perfil,
+    )
 
-def cargar_modelos():
-    """Carga los modelos entrenados"""
-    paths = get_paths()
-    
-    try:
-        with open(paths['modelos_sensoriales'], 'rb') as f:
-            modelos = pickle.load(f)
-        with open(paths['escaladores'], 'rb') as f:
-            escaladores = pickle.load(f)
-        with open(paths['features'], 'rb') as f:
-            features = pickle.load(f)
-        return modelos, escaladores, features, None
-    except Exception as e:
-        return None, None, None, str(e)
-
-# ==================== DEFINIR LÍMITES ====================
-
-def get_ingredient_limits():
-    """Define los límites de los ingredientes"""
-    return {
-        'azucar_g': (0.2, 11.4),
-        'jarabe_glucosa_g': (0.3, 7.8),
-        'agua_g': (0.5, 8.922),
-        'gelatina_g': (0.0, 1.2),
-        'goma_xantica_g': (0.0, 1.2),
-        'acido_citrico_g': (0.05, 0.6),
-        'stevia_g': (0.0, 1.4),
-        'esencia_g': (0.05, 0.6),
-        'sorbitol_g': (0.0, 5.5),
-        'fibra_g': (0.0, 2.6)
-    }
-
-def get_ingredient_descriptions():
-    """Descripciones de cada ingrediente"""
-    return {
-        'azucar_g': 'Azúcar: Aporta dulzura y cuerpo a la gomita',
-        'jarabe_glucosa_g': 'Jarabe de Glucosa: Evita la cristalización y aporta humedad',
-        'agua_g': 'Agua: Base de la formulación, disuelve los ingredientes',
-        'gelatina_g': 'Gelatina: Da la textura gomosa y elasticidad',
-        'goma_xantica_g': 'Goma Xántica: Estabilizador y espesante natural',
-        'acido_citrico_g': 'Ácido Cítrico: Aporta acidez y realza sabores',
-        'stevia_g': 'Stevia: Edulcorante natural, más dulce que el azúcar',
-        'esencia_g': 'Esencia: Aporta sabor y aroma a la gomita',
-        'sorbitol_g': 'Sorbitol: Edulcorante que aporta humedad y textura',
-        'fibra_g': 'Fibra: Aporta beneficios saludables y modifica la textura'
-    }
-
-# ==================== PREDECIR PERFIL ====================
-
-def predecir_perfil(receta, modelos, escaladores, targets, features):
-    """Predice el perfil sensorial de una receta"""
-    receta_df = pd.DataFrame([receta])
-    
-    for col in features:
-        if col not in receta_df.columns:
-            receta_df[col] = 0
-    
-    receta_df = receta_df[features]
-    
-    predicciones = {}
-    for target in targets:
-        try:
-            X_scaled = escaladores[target].transform(receta_df)
-            predicciones[target] = modelos[target].predict(X_scaled)[0]
-        except:
-            predicciones[target] = 0
-    
-    return predicciones
+warnings.filterwarnings("ignore")
 
 # ==================== INTERFAZ DE STREAMLIT ====================
 

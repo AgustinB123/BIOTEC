@@ -1,0 +1,6 @@
+Tamaño muestral (n),Modelo sensorial seleccionado,Modelo de viabilidad seleccionado,Modelo de aceptabilidad seleccionado,Resultado
+10,Ridge(alpha=1.0),"LogisticRegression(C=0.5, class_weight=""balanced"")","RandomForestClassifier(n_estimators=30, max_depth=4)","OK, sin errores"
+30,"RandomForestRegressor(n_estimators=30, max_depth=3)","RandomForestClassifier(n_estimators=50, max_depth=4)","RandomForestClassifier(n_estimators=50, max_depth=4)","OK, transición correcta"
+60,"RandomForestRegressor(n_estimators=100, max_depth=10)","RandomForestClassifier(n_estimators=50, max_depth=4)","RandomForestClassifier(n_estimators=50, max_depth=4)","OK, transición correcta"
+100,"RandomForestRegressor(n_estimators=100, max_depth=10)","RandomForestClassifier(n_estimators=100, max_depth=10)","RandomForestClassifier(n_estimators=100, max_depth=10)","OK, transición correcta"
+200,"RandomForestRegressor(n_estimators=100, max_depth=10)","RandomForestClassifier(n_estimators=100, max_depth=10)","RandomForestClassifier(n_estimators=100, max_depth=10)","OK, sin errores"

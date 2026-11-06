@@ -1,117 +1,50 @@
-"""
-📋 MÓDULO 6: COMPARACIÓN DE FORMULACIONES
-Autor: Proyecto Gomitas IA
-Fecha: 2026-08-25
-Descripción: Compara múltiples formulaciones lado a lado
-ESCALA: 1-9 (corregido)
-"""
+"""Módulo 6: Comparación multidimensional de formulaciones y perfiles sensoriales."""
 
-import os
-import pickle
-import pandas as pd
-import numpy as np
-import streamlit as st
-from pathlib import Path
-import matplotlib.pyplot as plt
-import seaborn as sns
-import plotly.graph_objects as go
-import plotly.express as px
 from datetime import datetime
+from pathlib import Path
 import warnings
-warnings.filterwarnings('ignore')
 
-# ==================== CONFIGURACIÓN ====================
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import seaborn as sns
+import streamlit as st
 
-def get_paths():
-    """Obtiene las rutas de los archivos"""
-    base_dir = Path(__file__).parent.parent
-    models_dir = base_dir / 'models'
-    data_dir = base_dir / 'data' / 'processed'
-    return {
-        'modelos_sensoriales': models_dir / 'modelos_sensoriales.pkl',
-        'escaladores': models_dir / 'escaladores.pkl',
-        'features': models_dir / 'features.pkl',
-        'dataset_procesado': data_dir / 'dataset_procesado.xlsx'
-    }
+try:
+    from dashboard.utils import (
+        cargar_modelos_sensoriales as cargar_modelos,
+        get_ingredient_descriptions as _get_desc,
+        get_ingredient_limits,
+        get_project_paths as get_paths,
+        predecir_perfil,
+    )
+except ImportError:
+    from utils import (
+        cargar_modelos_sensoriales as cargar_modelos,
+        get_ingredient_descriptions as _get_desc,
+        get_ingredient_limits,
+        get_project_paths as get_paths,
+        predecir_perfil,
+    )
 
-def cargar_modelos():
-    """Carga los modelos entrenados"""
-    paths = get_paths()
-    
-    try:
-        with open(paths['modelos_sensoriales'], 'rb') as f:
-            modelos = pickle.load(f)
-        with open(paths['escaladores'], 'rb') as f:
-            escaladores = pickle.load(f)
-        with open(paths['features'], 'rb') as f:
-            features = pickle.load(f)
-        return modelos, escaladores, features, None
-    except Exception as e:
-        return None, None, None, str(e)
+warnings.filterwarnings("ignore")
+
 
 def cargar_dataset():
-    """Carga el dataset procesado para comparar con recetas reales"""
+    """Carga el dataset procesado para comparar con formulaciones experimentales."""
     paths = get_paths()
-    
     try:
-        df = pd.read_excel(paths['dataset_procesado'])
+        df = pd.read_excel(paths["dataset_procesado"])
         return df, None
-    except Exception as e:
-        return None, str(e)
+    except Exception as exc:
+        return None, str(exc)
 
-# ==================== PREDECIR PERFIL ====================
-
-def predecir_perfil(receta, modelos, escaladores, targets, features):
-    """Predice el perfil sensorial de una receta"""
-    receta_df = pd.DataFrame([receta])
-    
-    for col in features:
-        if col not in receta_df.columns:
-            receta_df[col] = 0
-    
-    receta_df = receta_df[features]
-    
-    predicciones = {}
-    for target in targets:
-        try:
-            X_scaled = escaladores[target].transform(receta_df)
-            predicciones[target] = modelos[target].predict(X_scaled)[0]
-        except:
-            predicciones[target] = 0
-    
-    return predicciones
-
-# ==================== DEFINIR LÍMITES ====================
-
-def get_ingredient_limits():
-    """Define los límites de los ingredientes"""
-    return {
-        'azucar_g': (0.2, 11.4),
-        'jarabe_glucosa_g': (0.3, 7.8),
-        'agua_g': (0.5, 8.922),
-        'gelatina_g': (0.0, 1.2),
-        'goma_xantica_g': (0.0, 1.2),
-        'acido_citrico_g': (0.05, 0.6),
-        'stevia_g': (0.0, 1.4),
-        'esencia_g': (0.05, 0.6),
-        'sorbitol_g': (0.0, 5.5),
-        'fibra_g': (0.0, 2.6)
-    }
 
 def get_ingredient_descriptions():
-    """Descripciones de cada ingrediente"""
-    return {
-        'azucar_g': '🍬 Azúcar',
-        'jarabe_glucosa_g': '🍯 Jarabe de Glucosa',
-        'agua_g': '💧 Agua',
-        'gelatina_g': '🧪 Gelatina',
-        'goma_xantica_g': '🌿 Goma Xántica',
-        'acido_citrico_g': '🍋 Ácido Cítrico',
-        'stevia_g': '🌱 Stevia',
-        'esencia_g': '🌸 Esencia',
-        'sorbitol_g': '🍬 Sorbitol',
-        'fibra_g': '🌾 Fibra'
-    }
+    """Retorna nombres breves de cada ingrediente."""
+    return _get_desc(short=True)
 
 # ==================== INTERFAZ DE STREAMLIT ====================
 
